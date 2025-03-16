@@ -36,7 +36,7 @@
 
         async function salvarCalculo(comprimento, corrente, resistividade, quedaTensao) {
             try {
-                await addDoc(collection(db, "calculos"), {
+                await addDoc(collection(db, "calculos/contas"), {
                     comprimento: comprimento,
                     corrente: corrente,
                     resistividade: resistividade,
