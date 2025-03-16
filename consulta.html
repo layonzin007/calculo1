@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consultas</title>
+    <title>Consulta de Cálculos</title>
 </head>
 <body>
-    <h2>Lista de Cálculos</h2>
-    <button id="btnLogout">Sair</button>
-    <ul id="listaCalculos"></ul>
+    <h2>Histórico de Cálculos</h2>
+    <ul id="lista-calculos"></ul>
+    <button onclick="logout()">Sair</button>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBN9MBqXgcnFhLiYQ2VXcY6SGLpbUq3eMg",
             authDomain: "calculadora-22447.firebaseapp.com",
             projectId: "calculadora-22447",
-            storageBucket: "calculadora-22447.appspot.com",
+            storageBucket: "calculadora-22447.firebasestorage.app",
             messagingSenderId: "962043820577",
             appId: "1:962043820577:web:f5b9c817fbc020ae7b8160",
             measurementId: "G-ZC72VH2577"
@@ -29,46 +30,50 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                window.location.href = "login.html";
-            } else {
-                carregarCalculos();
-            }
-        });
-
         async function carregarCalculos() {
-            const listaCalculos = document.getElementById("listaCalculos");
-            listaCalculos.innerHTML = "Carregando...";
+            try {
+                const querySnapshot = await getDocs(collection(db, "calculos"));
+                const lista = document.getElementById("lista-calculos");
+                lista.innerHTML = ""; // Limpa a lista antes de carregar os novos dados
 
-            const q = query(collection(db, "calculos"), orderBy("dataHora", "desc"));
-            const querySnapshot = await getDocs(q);
+                querySnapshot.forEach((doc) => {
+                    const dados = doc.data();
+                    
+                    if (dados.dataHora && dados.dataHora.seconds) {
+                        const dataFormatada = new Date(dados.dataHora.seconds * 1000).toLocaleString("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit"
+                        });
 
-            listaCalculos.innerHTML = "";
-            querySnapshot.forEach((doc) => {
-               const dataHora = doc.data().dataHora;
+                        const item = document.createElement("li");
+                        item.textContent = `📅 ${dataFormatada} | 📏 ${dados.comprimento}m | 🔌 ${dados.corrente}A | ⚡ ${dados.resistividade}Ωm | 🔽 ${dados.quedaTensao}V`;
+                        lista.appendChild(item);
+                    }
+                });
+            } catch (error) {
+                console.error("Erro ao carregar cálculos:", error);
+            }
+        }
 
-if (dataHora && dataHora.seconds) {
-    const dataFormatada = new Date(dataHora.seconds * 1000).toLocaleString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
-    });
-
-    console.log("Data formatada:", dataFormatada);
-}
-
-                const item = document.createElement("li");
-                item.textContent = `📅 ${data.dataHora} | ${data.comprimento}m | ${data.corrente}A | ${data.resistividade}Ωm | ${data.quedaTensao}V`;
-                listaCalculos.appendChild(item);
+        function logout() {
+            signOut(auth).then(() => {
+                window.location.href = "login.html"; // Redireciona para login ao sair
+            }).catch((error) => {
+                console.error("Erro ao sair:", error);
             });
         }
 
-        document.getElementById("btnLogout").addEventListener("click", () => {
-            signOut(auth).then(() => window.location.href = "login.html");
+        // Verifica autenticação antes de carregar os cálculos
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                carregarCalculos();
+            } else {
+                window.location.href = "login.html"; // Se não estiver logado, volta para o login
+            }
         });
     </script>
 </body>
