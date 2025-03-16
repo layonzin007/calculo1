@@ -10,30 +10,29 @@
     <label>Comprimento (m): <input type="number" id="comprimento"></label><br>
     <label>Corrente (A): <input type="number" id="corrente"></label><br>
     <label>Resistividade (Ω·m): <input type="number" id="resistividade"></label><br>
-    <button onclick="calcular()">Calcular</button>
+    <button id="btnCalcular">Calcular</button>
     <h3>Resultado: <span id="resultado"></span> V</h3>
-    <p><a href="login.html">Var calculos salvos</a></p>
+
+    <p><a href="login.html">Acessar cálculos salvos</a></p>
 
     <script type="module">
-        // Importa o Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        
-const firebaseConfig = {
-  apiKey: "AIzaSyBN9MBqXgcnFhLiYQ2VXcY6SGLpbUq3eMg",
-  authDomain: "calculadora-22447.firebaseapp.com",
-  projectId: "calculadora-22447",
-  storageBucket: "calculadora-22447.firebasestorage.app",
-  messagingSenderId: "962043820577",
-  appId: "1:962043820577:web:f5b9c817fbc020ae7b8160",
-  measurementId: "G-ZC72VH2577"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyBN9MBqXgcnFhLiYQ2VXcY6SGLpbUq3eMg",
+            authDomain: "calculadora-22447.firebaseapp.com",
+            projectId: "calculadora-22447",
+            storageBucket: "calculadora-22447.appspot.com",
+            messagingSenderId: "962043820577",
+            appId: "1:962043820577:web:f5b9c817fbc020ae7b8160",
+            measurementId: "G-ZC72VH2577"
+        };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-        async function calcular() {
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.getElementById("btnCalcular").addEventListener("click", async () => {
             let comprimento = parseFloat(document.getElementById("comprimento").value);
             let corrente = parseFloat(document.getElementById("corrente").value);
             let resistividade = parseFloat(document.getElementById("resistividade").value);
@@ -46,20 +45,19 @@ const analytics = getAnalytics(app);
             let quedaTensao = (2 * comprimento * corrente * resistividade).toFixed(2);
             document.getElementById("resultado").textContent = quedaTensao;
 
-            // Salvar no Firestore
             try {
-                await addDoc(collection(db, "calculos"), {
+                const docRef = await addDoc(collection(db, "calculos"), {
                     comprimento,
                     corrente,
                     resistividade,
                     queda_tensao: parseFloat(quedaTensao),
                     data_hora: serverTimestamp()
                 });
-                console.log("Cálculo salvo no Firestore");
+                console.log("Cálculo salvo no Firestore com ID:", docRef.id);
             } catch (error) {
-                console.error("Erro ao salvar no Firestore: ", error);
+                console.error("Erro ao salvar no Firestore:", error);
             }
-        }
+        });
     </script>
 </body>
 </html>
