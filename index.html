@@ -49,20 +49,33 @@
             }
         }
 
-        function calcular() {
-            let comprimento = parseFloat(document.getElementById("comprimento").value);
-            let corrente = parseFloat(document.getElementById("corrente").value);
-            let resistividade = parseFloat(document.getElementById("resistividade").value);
+      async function calcular() {
+    let comprimento = parseFloat(document.getElementById("comprimento").value);
+    let corrente = parseFloat(document.getElementById("corrente").value);
+    let resistividade = parseFloat(document.getElementById("resistividade").value);
 
-            if (isNaN(comprimento) || isNaN(corrente) || isNaN(resistividade)) {
-                alert("Preencha todos os campos corretamente!");
-                return;
-            }
+    if (isNaN(comprimento) || isNaN(corrente) || isNaN(resistividade)) {
+        alert("Preencha todos os campos corretamente!");
+        return;
+    }
 
-            let quedaTensao = (corrente * resistividade * comprimento) / 1000;
-            document.getElementById("resultado").textContent = `Queda de tensão: ${quedaTensao.toFixed(2)} V`;
+    let quedaTensao = (corrente * resistividade * comprimento) / 1000;
+    document.getElementById("resultado").textContent = `Queda de tensão: ${quedaTensao.toFixed(2)} V`;
 
-            salvarCalculo(comprimento, corrente, resistividade, quedaTensao);
+    try {
+        await addDoc(collection(db, "calculos"), {
+            comprimento: comprimento,  
+            corrente: corrente,
+            resistividade: resistividade,
+            quedaTensao: quedaTensao.toFixed(2),  
+            dataHora: serverTimestamp()
+        });
+        console.log("Cálculo salvo com sucesso!");
+    } catch (error) {
+        console.error("Erro ao salvar cálculo:", error);
+    }
+}
+
         }
     </script>
 </body>
