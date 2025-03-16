@@ -64,6 +64,9 @@
                 console.error("Erro ao salvar cálculo:", error);
             }
         }
+
+        // 🔹 Torna a função acessível no escopo global
+        window.calcular = calcular;
     </script>
 </body>
 </html>
