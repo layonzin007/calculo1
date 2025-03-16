@@ -3,65 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de Cálculos</title>
+    <title>Consultas</title>
 </head>
 <body>
-    <h2>Histórico de Cálculos</h2>
-    <button onclick="logout()">Sair</button>
-    <ul id="lista-calculos"></ul>
+    <h2>Lista de Cálculos</h2>
+    <button id="btnLogout">Sair</button>
+    <ul id="listaCalculos"></ul>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-       const firebaseConfig = {
-  apiKey: "AIzaSyBN9MBqXgcnFhLiYQ2VXcY6SGLpbUq3eMg",
-  authDomain: "calculadora-22447.firebaseapp.com",
-  projectId: "calculadora-22447",
-  storageBucket: "calculadora-22447.firebasestorage.app",
-  messagingSenderId: "962043820577",
-  appId: "1:962043820577:web:f5b9c817fbc020ae7b8160",
-  measurementId: "G-ZC72VH2577"
-};
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBN9MBqXgcnFhLiYQ2VXcY6SGLpbUq3eMg",
+            authDomain: "calculadora-22447.firebaseapp.com",
+            projectId: "calculadora-22447",
+            storageBucket: "calculadora-22447.appspot.com",
+            messagingSenderId: "962043820577",
+            appId: "1:962043820577:web:f5b9c817fbc020ae7b8160",
+            measurementId: "G-ZC72VH2577"
+        };
 
+        // Inicializa Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
         const auth = getAuth(app);
-
-        function logout() {
-            signOut(auth).then(() => {
-                window.location.href = "login.html";
-            }).catch(error => {
-                console.error("Erro ao sair: ", error);
-            });
-        }
+        const db = getFirestore(app);
 
         // Verifica se o usuário está autenticado
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(auth, (user) => {
             if (!user) {
-                window.location.href = "login.html";
+                window.location.href = "login.html"; // Redireciona se não estiver logado
             } else {
-                carregarCalculos();
+                carregarCalculos(); // Carrega os cálculos ao entrar
             }
         });
 
+        // Função para carregar os cálculos do Firestore
         async function carregarCalculos() {
-            const lista = document.getElementById("lista-calculos");
-            lista.innerHTML = "";
+            const listaCalculos = document.getElementById("listaCalculos");
+            listaCalculos.innerHTML = "<p>Carregando...</p>";
 
-            const q = query(collection(db, "calculos"), orderBy("data_hora", "desc"));
+            const q = query(collection(db, "calculos"), orderBy("dataHora", "desc"));
             const querySnapshot = await getDocs(q);
+
+            listaCalculos.innerHTML = ""; // Limpa a lista
+
+            if (querySnapshot.empty) {
+                listaCalculos.innerHTML = "<p>Nenhum cálculo encontrado.</p>";
+                return;
+            }
 
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                const dataHora = data.data_hora ? new Date(data.data_hora.seconds * 1000).toLocaleString() : "Desconhecido";
-
                 const item = document.createElement("li");
-                item.textContent = `📅 ${dataHora} | 📏 ${data.comprimento}m | ⚡ ${data.corrente}A | 🏗️ ${data.resistividade}Ω·m | 🔻 ${data.queda_tensao}V`;
-                lista.appendChild(item);
+                item.textContent = `📅 ${data.dataHora} | Comprimento: ${data.comprimento}m | Corrente: ${data.corrente}A | Resistividade: ${data.resistividade}Ωm | Queda: ${data.quedaTensao}V`;
+                listaCalculos.appendChild(item);
             });
         }
+
+        // Função para logout
+        document.getElementById("btnLogout").addEventListener("click", () => {
+            signOut(auth).then(() => {
+                window.location.href = "login.html"; // Redireciona após logout
+            }).catch(error => {
+                alert("Erro ao sair: " + error.message);
+            });
+        });
+
     </script>
 </body>
 </html>
