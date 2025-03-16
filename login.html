@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    <h2>Login</h2>
+    <label>Email: <input type="email" id="email"></label><br>
+    <label>Senha: <input type="password" id="senha"></label><br>
+    <button onclick="login()">Entrar</button>
+    <p id="erro" style="color: red;"></p>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+      
+      const firebaseConfig = {
+  apiKey: "AIzaSyBN9MBqXgcnFhLiYQ2VXcY6SGLpbUq3eMg",
+  authDomain: "calculadora-22447.firebaseapp.com",
+  projectId: "calculadora-22447",
+  storageBucket: "calculadora-22447.firebasestorage.app",
+  messagingSenderId: "962043820577",
+  appId: "1:962043820577:web:f5b9c817fbc020ae7b8160",
+  measurementId: "G-ZC72VH2577"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        function login() {
+            let email = document.getElementById("email").value;
+            let senha = document.getElementById("senha").value;
+
+            signInWithEmailAndPassword(auth, email, senha)
+                .then(() => {
+                    window.location.href = "consulta.html"; // Redireciona após login
+                })
+                .catch(error => {
+                    document.getElementById("erro").textContent = "Erro: " + error.message;
+                });
+        }
+
+        // Se já estiver logado, redireciona para a consulta
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.location.href = "consulta.html";
+            }
+        });
+    </script>
+</body>
+</html>
