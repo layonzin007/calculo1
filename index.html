@@ -19,7 +19,14 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = { /* SUA CONFIGURAÇÃO DO FIREBASE */ };
+        const firebaseConfig = { 
+             apiKey: "AIzaSyBN9MBqXgcnFhLiYQ2VXcY6SGLpbUq3eMg",
+  authDomain: "calculadora-22447.firebaseapp.com",
+  projectId: "calculadora-22447",
+  storageBucket: "calculadora-22447.firebasestorage.app",
+  messagingSenderId: "962043820577",
+  appId: "1:962043820577:web:f5b9c817fbc020ae7b8160",
+  measurementId: "G-ZC72VH2577"};
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
