@@ -7,13 +7,16 @@
 </head>
 <body>
     <h2>Calculadora de Queda de Tensão</h2>
+
     <label>Comprimento (m): <input type="number" id="comprimento"></label><br>
     <label>Corrente (A): <input type="number" id="corrente"></label><br>
-    <label>Resistividade (Ωm): <input type="number" id="resistividade"></label><br>
+    <label>Resistividade (Ω.m): <input type="number" id="resistividade"></label><br>
+
     <button onclick="calcular()">Calcular</button>
     <p id="resultado"></p>
-    <br>
-    <a href="login.html">Acessar consultas</a>  
+
+    <hr>
+    <a href="login.html">Acessar consulta</a>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -24,58 +27,42 @@
             apiKey: "AIzaSyBN9MBqXgcnFhLiYQ2VXcY6SGLpbUq3eMg",
             authDomain: "calculadora-22447.firebaseapp.com",
             projectId: "calculadora-22447",
-            storageBucket: "calculadora-22447.appspot.com",
+            storageBucket: "calculadora-22447.firebasestorage.app",
             messagingSenderId: "962043820577",
             appId: "1:962043820577:web:f5b9c817fbc020ae7b8160",
             measurementId: "G-ZC72VH2577"
         };
 
-        // Inicializa Firebase
+        // Inicializa o Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        async function salvarCalculo(comprimento, corrente, resistividade, quedaTensao) {
+        // Função de cálculo e salvamento no Firestore
+        async function calcular() {
+            let comprimento = parseFloat(document.getElementById("comprimento").value);
+            let corrente = parseFloat(document.getElementById("corrente").value);
+            let resistividade = parseFloat(document.getElementById("resistividade").value);
+
+            if (isNaN(comprimento) || isNaN(corrente) || isNaN(resistividade)) {
+                alert("Preencha todos os campos corretamente!");
+                return;
+            }
+
+            let quedaTensao = (corrente * resistividade * comprimento) / 1000;
+            document.getElementById("resultado").textContent = `Queda de tensão: ${quedaTensao.toFixed(2)} V`;
+
             try {
-                await addDoc(collection(db, "calculos/contas"), {
-                    comprimento: comprimento,
+                await addDoc(collection(db, "calculos"), {
+                    comprimento: comprimento,  
                     corrente: corrente,
                     resistividade: resistividade,
-                    quedaTensao: quedaTensao,
+                    quedaTensao: quedaTensao.toFixed(2),  
                     dataHora: serverTimestamp()
                 });
                 console.log("Cálculo salvo com sucesso!");
             } catch (error) {
                 console.error("Erro ao salvar cálculo:", error);
             }
-        }
-
-      async function calcular() {
-    let comprimento = parseFloat(document.getElementById("comprimento").value);
-    let corrente = parseFloat(document.getElementById("corrente").value);
-    let resistividade = parseFloat(document.getElementById("resistividade").value);
-
-    if (isNaN(comprimento) || isNaN(corrente) || isNaN(resistividade)) {
-        alert("Preencha todos os campos corretamente!");
-        return;
-    }
-
-    let quedaTensao = (corrente * resistividade * comprimento) / 1000;
-    document.getElementById("resultado").textContent = `Queda de tensão: ${quedaTensao.toFixed(2)} V`;
-
-    try {
-        await addDoc(collection(db, "calculos"), {
-            comprimento: comprimento,  
-            corrente: corrente,
-            resistividade: resistividade,
-            quedaTensao: quedaTensao.toFixed(2),  
-            dataHora: serverTimestamp()
-        });
-        console.log("Cálculo salvo com sucesso!");
-    } catch (error) {
-        console.error("Erro ao salvar cálculo:", error);
-    }
-}
-
         }
     </script>
 </body>
