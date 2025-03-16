@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Cálculos</title>
+</head>
+<body>
+    <h2>Histórico de Cálculos</h2>
+    <button onclick="logout()">Sair</button>
+    <ul id="lista-calculos"></ul>
+
+    <script type="module">
+        // Importa o Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Configuração do Firebase (substitua com suas credenciais)
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_PROJETO.firebaseapp.com",
+            projectId: "SEU_PROJETO",
+            storageBucket: "SEU_PROJETO.appspot.com",
+            messagingSenderId: "SEU_ID",
+            appId: "SUA_APP_ID"
+        };
+
+        // Inicializa Firebase, Firestore e Autenticação
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        function logout() {
+            signOut(auth).then(() => {
+                window.location.href = "login.html";
+            }).catch(error => {
+                console.error("Erro ao sair: ", error);
+            });
+        }
+
+        // Verifica se o usuário está autenticado
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "login.html";
+            } else {
+                carregarCalculos();
+            }
+        });
+
+        async function carregarCalculos() {
+            const lista = document.getElementById("lista-calculos");
+            lista.innerHTML = "";
+
+            const q = query(collection(db, "calculos"), orderBy("data_hora", "desc"));
+            const querySnapshot = await getDocs(q);
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const dataHora = data.data_hora ? new Date(data.data_hora.seconds * 1000).toLocaleString() : "Desconhecido";
+
+                const item = document.createElement("li");
+                item.textContent = `📅 ${dataHora} | 📏 ${data.comprimento}m | ⚡ ${data.corrente}A | 🏗️ ${data.resistividade}Ω·m | 🔻 ${data.queda_tensao}V`;
+                lista.appendChild(item);
+            });
+        }
+    </script>
+</body>
+</html>
