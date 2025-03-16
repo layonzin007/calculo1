@@ -1,3 +1,100 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Queda de Tensão</title>
+</head>
+<body>
+    <h2>Calculadora de Queda de Tensão</h2>
+    <label>Comprimento (m): <input type="number" id="comprimento"></label><br>
+    <label>Corrente (A): <input type="number" id="corrente"></label><br>
+    <label>Resistividade (Ωm): <input type="number" id="resistividade"></label><br>
+    <button onclick="calcular()">Calcular</button>
+    <p id="resultado"></p>
+    <a href="login.html">Entrar para visualizar os cálculos</a>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = { /* SUA CONFIGURAÇÃO DO FIREBASE */ };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function calcular() {
+            let comprimento = parseFloat(document.getElementById("comprimento").value);
+            let corrente = parseFloat(document.getElementById("corrente").value);
+            let resistividade = parseFloat(document.getElementById("resistividade").value);
+
+            if (isNaN(comprimento) || isNaN(corrente) || isNaN(resistividade)) {
+                alert("Preencha todos os campos corretamente!");
+                return;
+            }
+
+            let quedaTensao = (corrente * resistividade * comprimento) / 1000;
+            document.getElementById("resultado").textContent = `Queda de tensão: ${quedaTensao.toFixed(2)} V`;
+
+            try {
+                await addDoc(collection(db, "calculos"), {
+                    comprimento,
+                    corrente,
+                    resistividade,
+                    quedaTensao: quedaTensao.toFixed(2),
+                    dataHora: serverTimestamp()
+                });
+                console.log("Cálculo salvo com sucesso!");
+            } catch (error) {
+                console.error("Erro ao salvar cálculo:", error);
+            }
+        }
+        window.calcular = calcular;
+    </script>
+</body>
+</html>
+
+<!-- login.html -->
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    <h2>Login</h2>
+    <label>Email: <input type="email" id="email"></label><br>
+    <label>Senha: <input type="password" id="senha"></label><br>
+    <button onclick="login()">Entrar</button>
+    <p id="erro" style="color: red;"></p>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = { /* SUA CONFIGURAÇÃO DO FIREBASE */ };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        function login() {
+            let email = document.getElementById("email").value;
+            let senha = document.getElementById("senha").value;
+
+            signInWithEmailAndPassword(auth, email, senha)
+                .then(() => {
+                    window.location.href = "consulta.html";
+                })
+                .catch(error => {
+                    document.getElementById("erro").textContent = "Erro: " + error.message;
+                });
+        }
+        window.login = login;
+    </script>
+</body>
+</html>
+
+<!-- consulta.html -->
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -8,71 +105,41 @@
 <body>
     <h2>Histórico de Cálculos</h2>
     <ul id="lista-calculos"></ul>
-    <button onclick="logout()">Sair</button>
-
+    <a href="index.html">Voltar para a calculadora</a>
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // Configuração do Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyBN9MBqXgcnFhLiYQ2VXcY6SGLpbUq3eMg",
-            authDomain: "calculadora-22447.firebaseapp.com",
-            projectId: "calculadora-22447",
-            storageBucket: "calculadora-22447.firebasestorage.app",
-            messagingSenderId: "962043820577",
-            appId: "1:962043820577:web:f5b9c817fbc020ae7b8160",
-            measurementId: "G-ZC72VH2577"
-        };
-
+        const firebaseConfig = { /* SUA CONFIGURAÇÃO DO FIREBASE */ };
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
         async function carregarCalculos() {
             try {
                 const querySnapshot = await getDocs(collection(db, "calculos"));
                 const lista = document.getElementById("lista-calculos");
-                lista.innerHTML = ""; // Limpa a lista antes de carregar os novos dados
+                lista.innerHTML = "";
 
                 querySnapshot.forEach((doc) => {
                     const dados = doc.data();
-                    
-                    if (dados.dataHora && dados.dataHora.seconds) {
-                        const dataFormatada = new Date(dados.dataHora.seconds * 1000).toLocaleString("pt-BR", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit"
-                        });
-
-                        const item = document.createElement("li");
-                        item.textContent = `📅 ${dataFormatada} | 📏 ${dados.comprimento}m | 🔌 ${dados.corrente}A | ⚡ ${dados.resistividade}Ωm | 🔽 ${dados.quedaTensao}V`;
-                        lista.appendChild(item);
-                    }
+                    const dataFormatada = new Date(dados.dataHora.seconds * 1000).toLocaleString("pt-BR");
+                    const item = document.createElement("li");
+                    item.textContent = `📅 ${dataFormatada} | 📏 ${dados.comprimento}m | 🔌 ${dados.corrente}A | ⚡ ${dados.resistividade}Ωm | 🔽 ${dados.quedaTensao}V`;
+                    lista.appendChild(item);
                 });
             } catch (error) {
                 console.error("Erro ao carregar cálculos:", error);
             }
         }
 
-        function logout() {
-            signOut(auth).then(() => {
-                window.location.href = "login.html"; // Redireciona para login ao sair
-            }).catch((error) => {
-                console.error("Erro ao sair:", error);
-            });
-        }
-
-        // Verifica autenticação antes de carregar os cálculos
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 carregarCalculos();
             } else {
-                window.location.href = "login.html"; // Se não estiver logado, volta para o login
+                window.location.href = "login.html";
             }
         });
     </script>
