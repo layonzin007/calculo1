@@ -1,4 +1,3 @@
-<!-- consulta.html -->
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -7,52 +6,62 @@
     <title>Consulta de Cálculos</title>
 </head>
 <body>
-    <h2>Histórico de Cálculos</h2>
+    <h2>Consulta de Cálculos</h2>
+    <button onclick="logout()">Sair</button>
     <ul id="lista-calculos"></ul>
-    <a href="index.html">Voltar para a calculadora</a>
-    
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        const firebaseConfig = { 
-             apiKey: "AIzaSyBN9MBqXgcnFhLiYQ2VXcY6SGLpbUq3eMg",
-  authDomain: "calculadora-22447.firebaseapp.com",
-  projectId: "calculadora-22447",
-  storageBucket: "calculadora-22447.firebasestorage.app",
-  messagingSenderId: "962043820577",
-  appId: "1:962043820577:web:f5b9c817fbc020ae7b8160",
-  measurementId: "G-ZC72VH2577"};
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_AUTH_DOMAIN",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_STORAGE_BUCKET",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        async function carregarCalculos() {
-            try {
-                const querySnapshot = await getDocs(collection(db, "calculos"));
-                const lista = document.getElementById("lista-calculos");
-                lista.innerHTML = "";
-
-                querySnapshot.forEach((doc) => {
-                    const dados = doc.data();
-                    const dataFormatada = new Date(dados.dataHora.seconds * 1000).toLocaleString("pt-BR");
-                    const item = document.createElement("li");
-                    item.textContent = `📅 ${dataFormatada} | 📏 ${dados.comprimento}m | 🔌 ${dados.corrente}A | ⚡ ${dados.resistividade}Ωm | 🔽 ${dados.quedaTensao}V`;
-                    lista.appendChild(item);
-                });
-            } catch (error) {
-                console.error("Erro ao carregar cálculos:", error);
-            }
-        }
-
+        // Verifica se o usuário está autenticado
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                carregarCalculos();
-            } else {
+            if (!user) {
                 window.location.href = "login.html";
+            } else {
+                carregarCalculos();
             }
         });
+
+        // Função para carregar os cálculos em ordem cronológica
+        async function carregarCalculos() {
+            const q = query(collection(db, "calculos"), orderBy("dataHora", "desc")); // "desc" = mais recente primeiro
+            const querySnapshot = await getDocs(q);
+
+            let lista = document.getElementById("lista-calculos");
+            lista.innerHTML = "";
+
+            querySnapshot.forEach((doc) => {
+                let data = doc.data();
+                let dataFormatada = new Date(data.dataHora.seconds * 1000).toLocaleString("pt-BR");
+
+                let item = document.createElement("li");
+                item.textContent = `${dataFormatada} | ${data.usuario || "Desconhecido"} | ${data.comprimento}m | ${data.corrente}A | ${data.resistividade}Ωm | ${data.quedaTensao}V`;
+                lista.appendChild(item);
+            });
+        }
+
+        // Função para logout
+        function logout() {
+            signOut(auth).then(() => {
+                window.location.href = "login.html";
+            });
+        }
     </script>
 </body>
 </html>
